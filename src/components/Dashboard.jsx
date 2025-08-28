@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import useResponsive from '../hooks/useResponsive';
+import FullLeaderboard from './FullLeaderboard';
+import ProjectIdeaCards from './ProjectIdeaCards_Simple';
+import MyProjects from './MyProjects';
+import ProjectDetailModal from './ProjectDetailModal';
+import UserProfileModal from './UserProfileModal';
+import ProfileEditModal from './ProfileEditModal';
 
 // Mock data for demonstration
 const mockUser = {
@@ -75,6 +81,16 @@ const Dashboard = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showProjectIdeas, setShowProjectIdeas] = useState(false);
+  const [showMyProjects, setShowMyProjects] = useState(false);
+  const [showProjectDetail, setShowProjectDetail] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [currentProject, setCurrentProject] = useState(null);
+  const [savedProjects, setSavedProjects] = useState([]);
+  const [isProjectSaved, setIsProjectSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -102,12 +118,18 @@ const Dashboard = () => {
           setSelectedProject(null);
         }
         if (showPostModal) setShowPostModal(false);
+        if (showLeaderboard) setShowLeaderboard(false);
+        if (showProjectIdeas) setShowProjectIdeas(false);
+        if (showMyProjects) setShowMyProjects(false);
+        if (showProjectDetail) setShowProjectDetail(false);
+        if (showUserProfile) setShowUserProfile(false);
+        if (showProfileEdit) setShowProfileEdit(false);
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [showModal, showPostModal]);
+  }, [showModal, showPostModal, showLeaderboard, showProjectIdeas, showMyProjects, showProjectDetail, showUserProfile, showProfileEdit]);
 
   const getDifficultyColor = (difficulty) => {
     switch(difficulty) {
@@ -550,6 +572,50 @@ const Dashboard = () => {
     );
   };
 
+  // Handler functions for new modals
+  const handleViewProject = (project, isSaved = false) => {
+    setCurrentProject(project);
+    setIsProjectSaved(isSaved);
+    setShowProjectDetail(true);
+  };
+
+  const handleViewProfile = (user) => {
+    setSelectedUser(user);
+    setShowUserProfile(true);
+  };
+
+  const handleEditProfile = () => {
+    setShowUserProfile(false);
+    setShowProfileEdit(true);
+  };
+
+  const handleSaveProject = (project) => {
+    setSavedProjects(prev => [...prev, project]);
+    setShowProjectDetail(false);
+  };
+
+  const handleUnsaveProject = (project) => {
+    setSavedProjects(prev => prev.filter(p => p.id !== project.id));
+    if (showProjectDetail) {
+      setShowProjectDetail(false);
+    }
+  };
+
+  const handleStartProject = (project) => {
+    // Move project from saved to in progress
+    setSavedProjects(prev => prev.filter(p => p.id !== project.id));
+    setShowProjectDetail(false);
+    // You would typically add this to the user's active projects here
+    console.log('Starting project:', project.title);
+  };
+
+  const handleSaveProfile = (updatedUser) => {
+    // Update user profile logic here
+    setSelectedUser(updatedUser);
+    setShowProfileEdit(false);
+    setShowUserProfile(true);
+  };
+
   const filteredProjects = mockProjects.filter(project =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -817,7 +883,10 @@ const Dashboard = () => {
                 </div>
               </button>
               
-              <button className="w-full group relative overflow-hidden">
+              <button 
+                onClick={() => setShowMyProjects(true)}
+                className="w-full group relative overflow-hidden"
+              >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 <div className="relative flex items-center space-x-4 px-6 py-4 text-left bg-white/20 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-slate-600/20 shadow-md group-hover:shadow-xl group-hover:scale-[1.02] transition-all duration-300">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-purple-500/25 group-hover:scale-110 transition-all duration-300">
@@ -829,7 +898,10 @@ const Dashboard = () => {
                 </div>
               </button>
               
-              <button className="w-full group relative overflow-hidden">
+              <button 
+                onClick={() => setShowProjectIdeas(true)}
+                className="w-full group relative overflow-hidden"
+              >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/10 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                 <div className="relative flex items-center space-x-4 px-6 py-4 text-left bg-white/20 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-slate-600/20 shadow-md group-hover:shadow-xl group-hover:scale-[1.02] transition-all duration-300">
                   <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-emerald-500/25 group-hover:scale-110 transition-all duration-300">
@@ -902,7 +974,10 @@ const Dashboard = () => {
                 ))}
               </div>
               
-              <button className="w-full mt-6 group relative overflow-hidden">
+              <button 
+                onClick={() => setShowLeaderboard(true)}
+                className="w-full mt-6 group relative overflow-hidden"
+              >
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-2xl"></div>
                 <div className="relative flex items-center justify-center space-x-2 py-4 px-6 bg-white/20 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl border border-white/30 dark:border-slate-600/20 shadow-md group-hover:shadow-lg group-hover:scale-[1.02] transition-all duration-300">
                   <span className="font-bold text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">View Full Leaderboard</span>
@@ -1023,7 +1098,14 @@ const Dashboard = () => {
                     </div>
                   </button>
                   
-                  <button className="group flex items-center space-x-3 px-8 py-4 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm text-slate-700 dark:text-slate-300 rounded-2xl border border-white/30 dark:border-slate-600/30 font-bold text-lg hover:bg-white/80 dark:hover:bg-slate-800/80 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                  <button 
+                    onClick={() => {
+                      console.log('Explore Projects button clicked');
+                      setShowProjectIdeas(true);
+                      console.log('showProjectIdeas state should now be true');
+                    }}
+                    className="group flex items-center space-x-3 px-8 py-4 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm text-slate-700 dark:text-slate-300 rounded-2xl border border-white/30 dark:border-slate-600/30 font-bold text-lg hover:bg-white/80 dark:hover:bg-slate-800/80 hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                  >
                     <svg className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -1346,6 +1428,89 @@ const Dashboard = () => {
       {showPostModal && (
         <PostIdeaModal 
           onClose={() => setShowPostModal(false)}
+          isMobile={isMobile}
+          isTablet={isTablet}
+        />
+      )}
+
+      {/* New Modals */}
+      {showLeaderboard && (
+        <FullLeaderboard
+          onClose={() => setShowLeaderboard(false)}
+          isMobile={isMobile}
+          isTablet={isTablet}
+        />
+      )}
+
+      {showProjectIdeas && (
+        <>
+          {console.log('Rendering ProjectIdeaCards modal')}
+          <ProjectIdeaCards
+            onClose={() => setShowProjectIdeas(false)}
+            onStartProject={handleStartProject}
+            onViewProject={handleViewProject}
+            onViewProfile={handleViewProfile}
+            isMobile={isMobile}
+            isTablet={isTablet}
+          />
+        </>
+      )}
+
+      {showMyProjects && (
+        <MyProjects
+          onClose={() => setShowMyProjects(false)}
+          onViewProject={handleViewProject}
+          onViewProfile={handleViewProfile}
+          savedProjects={savedProjects}
+          onUnsaveProject={handleUnsaveProject}
+          onStartProject={handleStartProject}
+          isMobile={isMobile}
+          isTablet={isTablet}
+        />
+      )}
+
+      {/* Project Detail Modal */}
+      {showProjectDetail && currentProject && (
+        <ProjectDetailModal
+          project={currentProject}
+          onClose={() => {
+            setShowProjectDetail(false);
+            setCurrentProject(null);
+          }}
+          onSave={handleSaveProject}
+          onUnsave={handleUnsaveProject}
+          onStartProject={handleStartProject}
+          onViewProfile={handleViewProfile}
+          isSaved={isProjectSaved}
+          isMobile={isMobile}
+          isTablet={isTablet}
+        />
+      )}
+
+      {/* User Profile Modal */}
+      {showUserProfile && selectedUser && (
+        <UserProfileModal
+          user={selectedUser}
+          onClose={() => {
+            setShowUserProfile(false);
+            setSelectedUser(null);
+          }}
+          currentUser={mockUser}
+          onEditProfile={handleEditProfile}
+          isMobile={isMobile}
+          isTablet={isTablet}
+        />
+      )}
+
+      {/* Profile Edit Modal */}
+      {showProfileEdit && selectedUser && (
+        <ProfileEditModal
+          user={selectedUser}
+          onClose={() => {
+            setShowProfileEdit(false);
+            setSelectedUser(null);
+          }}
+          onSave={handleSaveProfile}
           isMobile={isMobile}
           isTablet={isTablet}
         />
